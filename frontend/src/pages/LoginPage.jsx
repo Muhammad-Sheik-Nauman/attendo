@@ -133,8 +133,8 @@ export default function LoginPage({ onLogin }) {
           </form>
 
           <div className="mt-6 pt-4 border-t border-surface-700/30 text-center">
-            <p className="text-xs text-surface-500">
-              Default: <span className="text-surface-400 font-mono">admin</span> / <span className="text-surface-400 font-mono">admin123</span>
+            <p className="text-xs text-surface-500 italic">
+              Use your campus administrator credentials to log in.
             </p>
           </div>
         </motion.div>
