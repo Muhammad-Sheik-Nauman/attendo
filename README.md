@@ -10,7 +10,8 @@ A professional, AI-powered attendance system that recognizes multiple students f
 - **Student Registration**: Register students with multiple face images for better accuracy
 - **Class-Based Filtering**: Filter attendance by class/section
 - **Dashboard Analytics**: Visual charts and statistics for attendance trends
-- **CSV Export**: Export attendance records for reporting
+- **Attendance Statistics**: View long-term attendance percentage and class counts per student
+- **CSV Export**: Export attendance records and statistical reports
 - **Admin Authentication**: JWT-based secure admin login
 - **Duplicate Prevention**: One attendance record per student per day
 
@@ -60,6 +61,7 @@ attendo/
 │   │   │   ├── AttendancePage.jsx
 │   │   │   ├── StudentsPage.jsx
 │   │   │   ├── HistoryPage.jsx
+│   │   │   ├── StatisticsPage.jsx
 │   │   │   ├── TelegramPage.jsx
 │   │   │   └── LoginPage.jsx
 │   │   └── services/
@@ -123,8 +125,8 @@ npm run dev
 
 ### 5. Default Login
 
-- **Username**: `admin`
-- **Password**: `admin123`
+- **Username**: `admin` (or as set in `.env`)
+- **Password**: As set in your `backend/.env` file
 
 ## 📱 Telegram Bot Setup
 
@@ -157,6 +159,7 @@ npm run dev
 | POST | `/api/attendance/process` | Process group photo |
 | GET | `/api/attendance/history` | Get attendance logs |
 | GET | `/api/attendance/dashboard` | Dashboard stats |
+| GET | `/api/attendance/student-stats` | Student-wise statistics |
 | GET | `/api/attendance/export` | Export as CSV data |
 | POST | `/api/telegram/webhook` | Telegram webhook |
 
