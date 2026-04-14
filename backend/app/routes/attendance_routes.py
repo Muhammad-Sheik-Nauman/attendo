@@ -68,6 +68,7 @@ async def process_attendance(
     current_time = datetime.now().strftime("%I:%M %p")
     current_date = date.today().strftime("%d %B %Y")
     
+    recognized_student_ids = set()
     for face_data in detected_faces:
         bbox = face_data["bbox"]
         x, y, w, h = bbox["x"], bbox["y"], bbox["w"], bbox["h"]
@@ -93,17 +94,18 @@ async def process_attendance(
             recognized_count += 1
             student_name = matched_student["name"]
             student_sid = matched_student["student_id"]
+            recognized_student_ids.add(student_sid)
             
-            # Step 5: Record attendance (prevent duplicates per day)
-            existing_attendance = await db.attendance.find_one({
+            # Step 5: Record attendance (ensure we record 'present' even if previously marked 'absent')
+            attendance_record = await db.attendance.find_one({
                 "student_id": student_sid,
                 "date": today_str
             })
             
             telegram_sent = False
             
-            if not existing_attendance:
-                # First time recognition today - record attendance
+            if not attendance_record:
+                # First time seeing them today - record as present
                 await db.attendance.insert_one({
                     "student_id": student_sid,
                     "student_name": student_name,
@@ -114,6 +116,18 @@ async def process_attendance(
                     "time": current_time,
                     "timestamp": datetime.utcnow()
                 })
+            elif attendance_record.get("status") == "absent":
+                # They were previously marked absent (maybe in a different photo) 
+                # but are now PRESENT. Update the record!
+                await db.attendance.update_one(
+                    {"_id": attendance_record["_id"]},
+                    {"$set": {
+                        "status": "present",
+                        "time": current_time,
+                        "confidence": round(confidence, 2),
+                        "timestamp": datetime.utcnow()
+                    }}
+                )
 
             # Send Telegram notification every time face is recognized
             chat_id = matched_student.get("telegram_chat_id")
@@ -144,6 +158,57 @@ async def process_attendance(
                 "status": "unknown"
             })
     
+    # Step 6: Identify and Notify Absentees
+    absent_count = 0
+    absentees_notified = 0
+    
+    # Get all students in this class section
+    all_class_students = await db.students.find({"class_section": class_section}).to_list(length=1000)
+    
+    for student in all_class_students:
+        if student["student_id"] not in recognized_student_ids:
+            absent_count += 1
+            
+            # Check if already marked present today (maybe in a previous photo)
+            already_present = await db.attendance.find_one({
+                "student_id": student["student_id"],
+                "date": today_str,
+                "status": "present"
+            })
+            
+            if not already_present:
+                # Record as absent in DB if not already recorded today
+                existing_absent_record = await db.attendance.find_one({
+                    "student_id": student["student_id"],
+                    "date": today_str,
+                    "status": "absent"
+                })
+                
+                if not existing_absent_record:
+                    await db.attendance.insert_one({
+                        "student_id": student["student_id"],
+                        "student_name": student["name"],
+                        "class_section": student["class_section"],
+                        "status": "absent",
+                        "confidence": 0,
+                        "date": today_str,
+                        "time": current_time,
+                        "timestamp": datetime.utcnow()
+                    })
+
+                # Send Telegram "Absent" notification
+                chat_id = student.get("telegram_chat_id")
+                if chat_id:
+                    notified = await telegram_service.send_attendance_notification(
+                        chat_id=chat_id,
+                        student_name=student["name"],
+                        status="absent",
+                        time_str=current_time,
+                        date_str=current_date
+                    )
+                    if notified:
+                        absentees_notified += 1
+
     # Step 7: Draw results on image
     output_filename = f"result_{filename}"
     output_path = os.path.join(settings.UPLOAD_DIR, "attendance", output_filename)
@@ -154,10 +219,12 @@ async def process_attendance(
     
     return {
         "success": True,
-        "message": f"Processed {len(results)} faces: {recognized_count} recognized, {unknown_count} unknown",
+        "message": f"Processed {len(results)} faces. {recognized_count} Present, {absent_count} Absent ({absentees_notified} notified).",
         "total_faces": len(results),
         "recognized": recognized_count,
         "unknown": unknown_count,
+        "absent": absent_count,
+        "absentees_notified": absentees_notified,
         "faces": results,
         "image_base64": result_image_base64,
         "date": current_date,
