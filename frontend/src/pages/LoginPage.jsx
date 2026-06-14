@@ -132,10 +132,29 @@ export default function LoginPage({ onLogin }) {
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-surface-700/30 text-center">
-            <p className="text-xs text-surface-500 italic">
-              Use your campus administrator credentials to log in.
-            </p>
+          <div className="mt-6 pt-4 border-t border-surface-700/30">
+            <p className="text-xs text-surface-500 text-center mb-3">Demo Credentials</p>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => { setUsername('admin'); setPassword('Att3nd0@Admin2024!') }}
+              className="w-full p-3 rounded-xl bg-surface-800/60 border border-primary-500/20 hover:border-primary-500/50 transition-all text-left group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-surface-500 w-16">Username</span>
+                    <span className="text-xs font-mono text-primary-400">admin</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-surface-500 w-16">Password</span>
+                    <span className="text-xs font-mono text-primary-400">Att3nd0@Admin2024!</span>
+                  </div>
+                </div>
+                <span className="text-xs text-surface-500 group-hover:text-primary-400 transition-colors">Click to fill →</span>
+              </div>
+            </motion.button>
           </div>
         </motion.div>
 
