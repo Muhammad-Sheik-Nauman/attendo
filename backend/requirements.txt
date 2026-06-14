@@ -12,5 +12,5 @@ aiohttp>=3.11.0
 pydantic>=2.10.0
 bcrypt>=4.1.0
 python-jose[cryptography]>=3.3.0
-tensorflow-cpu>=2.16.0
-tf-keras>=2.16.0
+tensorflow-cpu==2.16.1
+tf-keras==2.16.0
