@@ -7,8 +7,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+  },
   server: {
     port: 5173,
+    // Proxy only used in local dev (when VITE_API_URL is not set)
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
